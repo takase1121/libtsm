@@ -3,11 +3,12 @@
 # The SHL subsystem contains several small code pieces used all over libtsm and
 # other applications.
 #
-add_library(shl OBJECT
-    shl-htable.c
-    shl-pty.c
-    shl-ring.c
-)
+set(shl_sources shl-htable.c shl-ring.c)
+if(BUILD_GTKTSM)
+    set(shl_sources ${shl_sources} shl-pty.c)
+endif()
+
+add_library(shl OBJECT ${shl_sources})
 
 target_include_directories(shl
     PUBLIC
