@@ -12,7 +12,11 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef _WIN32
 #include <sys/uio.h>
+#endif
+
 #include "shl-macro.h"
 #include "shl-ring.h"
 

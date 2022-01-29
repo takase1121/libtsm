@@ -16,7 +16,15 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef _WIN32
+struct iovec {
+	void *iov_base;
+	size_t iov_len;
+}
+#else
 #include <sys/uio.h>
+#endif
 
 struct shl_ring {
 	uint8_t *buf;		/* buffer or NULL */
