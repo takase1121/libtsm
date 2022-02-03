@@ -90,6 +90,13 @@ if(BUILD_TESTING)
 endif()
 
 #
+# Temporary workaround for BUILD_ENABLE_DEBUG
+#
+if(ENABLE_EXTRA_DEBUG)
+    add_compile_definitions(BUILD_ENABLE_DEBUG)
+endif()
+
+#
 # Installation
 #
 install(TARGETS tsm EXPORT tsm-targets
