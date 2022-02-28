@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 
 project(libtsm
     LANGUAGES C
-    VERSION 4.0.1
+    VERSION 4.0.2
 )
 
 # Some meta data
@@ -54,7 +54,6 @@ add_feature_info(BUILD_GTKTSM BUILD_GTKTSM "build the gtktsm example, it require
 #---------------------------------------------------------------------------------------
 # Additional find modules
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules/gnome-cmake/modules)
 
 # GNU filesystem layout
 include(GNUInstallDirs)
