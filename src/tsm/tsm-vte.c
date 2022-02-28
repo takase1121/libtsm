@@ -153,7 +153,8 @@ struct tsm_vte {
 	void *llog_data;
 	struct tsm_screen *con;
 	tsm_vte_write_cb write_cb;
-	void *data;
+	tsm_vte_ev_cb ev_cb;
+	void *data, *ev_data;
 	char *palette_name;
 
 	struct tsm_utf8_mach *mach;
@@ -442,6 +443,8 @@ int tsm_vte_new(struct tsm_vte **out, struct tsm_screen *con,
 	vte->con = con;
 	vte->write_cb = write_cb;
 	vte->data = data;
+	vte->ev_cb = NULL;
+	vte->ev_data = NULL;
 	vte->osc_cb = NULL;
 	vte->osc_data = NULL;
 	vte->custom_palette_storage = NULL;
@@ -501,6 +504,16 @@ void tsm_vte_set_osc_cb(struct tsm_vte *vte, tsm_vte_osc_cb osc_cb, void *osc_da
 
 	vte->osc_cb = osc_cb;
 	vte->osc_data = osc_data;
+}
+
+SHL_EXPORT
+void tsm_vte_set_ev_cb(struct tsm_vte *vte, tsm_vte_ev_cb ev_cb, void *ev_data)
+{
+	if (!vte)
+		return;
+
+	vte->ev_cb = ev_cb;
+	vte->ev_data = ev_data;
 }
 
 static int vte_update_palette(struct tsm_vte *vte)
@@ -762,6 +775,7 @@ static void send_primary_da(struct tsm_vte *vte)
 /* execute control character (C0 or C1) */
 static void do_execute(struct tsm_vte *vte, uint32_t ctrl)
 {
+	struct tsm_vte_event event;
 	switch (ctrl) {
 	case 0x00: /* NUL */
 		/* Ignore on input */
@@ -772,11 +786,10 @@ static void do_execute(struct tsm_vte *vte, uint32_t ctrl)
 		vte_write(vte, "\x06", 1);
 		break;
 	case 0x07: /* BEL */
-		/* Sound bell tone */
-		/* TODO: I always considered this annying, however, we
-		 * should at least provide some way to enable it if the
-		 * user *really* wants it.
-		 */
+		if (vte->ev_cb) {
+			event.type = TSM_EV_BEL;
+			vte->ev_cb(vte, &event, vte->ev_data);
+		}
 		break;
 	case 0x08: /* BS */
 		/* Move cursor one position left */
@@ -1421,6 +1434,7 @@ static inline void set_reset_flag(struct tsm_vte *vte, bool set,
 
 static void csi_mode(struct tsm_vte *vte, bool set)
 {
+	struct tsm_vte_event event;
 	unsigned int i;
 
 	for (i = 0; i < vte->csi_argc; ++i) {
@@ -1557,6 +1571,18 @@ static void csi_mode(struct tsm_vte *vte, bool set)
 			else
 				tsm_screen_reset_flags(vte->con,
 						       TSM_SCREEN_ALTERNATE);
+			continue;
+		case 1000: /* Enable mouse tracking */
+		case 1002: /* cell motion mouse tracking */
+		case 1003: /* any event mouse tracking (no button press needed) */
+		case 1005: /* utf mouse tracking */
+		case 1006: /* sgr mouse tracking */
+		case 1015: /* urxvt mouse tracking */
+			if (vte->ev_cb) {
+				event.type = set ? TSM_EV_MOUSE_TRACK : TSM_EV_MOUSE_UNTRACK;
+				event.e.mouse = vte->csi_argv[i];
+				vte->ev_cb(vte, &event, vte->ev_data);
+			}
 			continue;
 		case 1047: /* Alternate screen buffer with post-erase */
 			if (vte->flags & FLAG_TITE_INHIBIT_MODE)

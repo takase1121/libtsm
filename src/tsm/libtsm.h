@@ -284,6 +284,21 @@ tsm_age_t tsm_screen_draw(struct tsm_screen *con, tsm_screen_draw_cb draw_cb,
 
 struct tsm_vte;
 
+/* enum defining type of events */
+enum tsm_vte_event_type {
+	TSM_EV_BEL,
+	TSM_EV_MOUSE_TRACK,
+	TSM_EV_MOUSE_UNTRACK,
+};
+
+/* event type */
+struct tsm_vte_event {
+	enum tsm_vte_event_type type;
+	union {
+		int mouse;
+	} e;
+};
+
 /* keep in sync with shl_xkb_mods */
 enum tsm_vte_modifier {
 	TSM_SHIFT_MASK		= (1 << 0),
@@ -330,6 +345,10 @@ typedef void (*tsm_vte_osc_cb) (struct tsm_vte *vte,
 				  size_t len,
 				  void *data);
 
+typedef void (*tsm_vte_ev_cb) (struct tsm_vte *vte,
+				struct tsm_vte_event *ev,
+				void *data);
+
 int tsm_vte_new(struct tsm_vte **out, struct tsm_screen *con,
 		tsm_vte_write_cb write_cb, void *data,
 		tsm_log_t log, void *log_data);
@@ -337,6 +356,7 @@ void tsm_vte_ref(struct tsm_vte *vte);
 void tsm_vte_unref(struct tsm_vte *vte);
 
 void tsm_vte_set_osc_cb(struct tsm_vte *vte, tsm_vte_osc_cb osc_cb, void *osc_data);
+void tsm_vte_set_ev_cb(struct tsm_vte *vte, tsm_vte_ev_cb ev_cb, void *ev_data);
 
 /**
  * @brief Set color palette to one of the predefined palette on the vte object.
